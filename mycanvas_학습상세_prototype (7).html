@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Canvas 학습상세 개선안 프로토타입</title>
+<style>
+  :root {
+    --brand: #0066ff;
+    --brand-light: #e8f0ff;
+    --success: #00bf40;
+    --success-light: #e6f9ed;
+    --error: #fa2e43;
+    --error-light: #fff0f1;
+    --warning: #f5a623;
+    --black100: #171719;
+    --black80: rgba(23,23,25,0.8);
+    --black60: rgba(23,23,25,0.6);
+    --black45: rgba(23,23,25,0.45);
+    --black20: rgba(23,23,25,0.2);
+    --bg100: #ffffff;
+    --bg300: #dbdcdf;
+    --bg200: #eaebec;
+    --bg500: #878a93;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.08);
+    --shadow-md: 0 2px 12px rgba(0,0,0,0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, sans-serif;
+    background: #f2f3f5;
+    color: var(--black100);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── 탭 네비게이션 ── */
+  .version-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #fff;
+    border-bottom: 1px solid var(--bg200);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 32px;
+    box-shadow: var(--shadow-sm);
+  }
+  .version-nav .nav-label {
+    font-size: 12px;
+    color: var(--black45);
+    padding-right: 20px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .version-tab {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--black45);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .version-tab:hover { color: var(--black80); }
+  .version-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+  /* ── 버전 패널 ── */
+  .version-panel { display: none; padding: 28px 32px 60px; max-width: 1280px; margin: 0 auto; }
+  .version-panel.active { display: block; }
+
+  .version-header {
+    margin-bottom: 24px;
+  }
+  .version-badge {
+    display: inline-block;
+    background: var(--brand);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+  }
+  .version-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--black100);
+    margin-bottom: 4px;
+  }
+  .version-desc {
+    font-size: 13px;
+    color: var(--black60);
+    line-height: 1.6;
+  }
+
+  /* ── 학습상세 컨테이너 ── */
+  .canvas-panel {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+  .canvas-panel-title {
+    padding: 24px 28px 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--black100);
+    border-bottom: 1px solid var(--bg200);
+    padding-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .canvas-panel-title span {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--black45);
+  }
+
+  /* ── 섹션 ── */
+  .section {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--bg200);
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--black100);
+  }
+  .section-count {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--black45);
+  }
+  .section-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--black60);
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-switch {
+    width: 36px;
+    height: 20px;
+    background: var(--bg300);
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+  .toggle-switch.on { background: var(--brand); }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-switch.on::after { left: 19px; }
+
+  /* ── 카드 그리드 ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px 20px;
+  }
+
+  /* ── 카드 ── */
+  .card {
+    background: #fff;
+    border: 1px solid var(--bg200);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.15s;
+    cursor: pointer;
+  }
+  .card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .card.dimmed { opacity: 0.55; }
+  .card.completed-style { border-color: var(--success); border-width: 1.5px; }
+
+  .card-thumb {
+    position: relative;
+    aspect-ratio: 16/9;
+    background: var(--bg300);
+    overflow: hidden;
+  }
+  .card-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: linear-gradient(135deg, var(--bg300) 0%, var(--bg500) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #fff;
+    font-weight: 600;
+  }
+  .thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 500;
+  }
+  .card-type-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(91,91,115,0.85);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 20px;
+  }
+  .card-type-badge.micro { background: var(--error); }
+
+  .card-body {
+    padding: 10px 12px 12px;
+  }
+  .progress-bar {
+    height: 3px;
+    background: var(--bg200);
+    border-radius: 2px;
+    margin-bottom: 7px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--brand);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+  .progress-fill.done { background: var(--success); }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--black60);
+  }
+  .card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--black100);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+  .card-period {
+    font-size: 11px;
+    color: var(--black45);
+  }
+
+  /* ── 상태 뱃지 ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-success { background: var(--success-light); color: var(--success); }
+  .badge-error   { background: var(--error-light);   color: var(--error); }
+  .badge-brand   { background: var(--brand-light);   color: var(--brand); }
+  .badge-neutral { background: var(--bg200); color: var(--black60); }
+  .badge-warning { background: #fff8ec; color: var(--warning); }
+
+  /* ── 서브헤더 구분선 ── */
+  .sub-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0 14px;
+  }
+  .sub-divider-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--black45);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .sub-divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--bg200);
+  }
+
+  /* ── 빈 상태 ── */
+  .empty-state {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--black45);
+    font-size: 13px;
+  }
+  .empty-state .empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+  /* ── V2 탭 스타일 ── */
+  .inner-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--bg200);
+  }
+  .inner-tab {
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--black45);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.18s;
+  }
+  .inner-tab:hover { color: var(--black80); }
+  .inner-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+  .inner-tab .tab-count {
+    font-size: 12px;
+    font-weight: 400;
+    margin-left: 4px;
+    color: inherit;
+    opacity: 0.7;
+  }
+
+  .inner-panel { display: none; }
+  .inner-panel.active { display: block; }
+
+  /* ── V3 종료 섹션 ── */
+  .section.terminated { background: #fafafa; }
+  .section.terminated .card { background: #fafafa; }
+
+  /* ── 설명 툴팁 ── */
+  .spec-note {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 6px;
+    background: #fffbec;
+    border: 1px solid #f5e4a0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #7a6010;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .spec-note strong { color: #5a4500; }
+
+  /* ── 기간 드롭다운 ── */
+  .period-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23878a93' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+    border: 1px solid var(--bg300);
+    border-radius: 6px;
+    padding: 6px 28px 6px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--black80);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .period-select:hover { border-color: var(--black45); }
+  .period-select:focus { border-color: var(--brand); }
+
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--black60);
+  }
+
+  /* ── 쇼츠 섹션 ── */
+  .shorts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 14px 16px;
+  }
+  .shorts-card {
+    background: #fff;
+    border: 1px solid var(--bg200);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.15s;
+  }
+  .shorts-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .shorts-thumb {
+    position: relative;
+    aspect-ratio: 9/16;
+    overflow: hidden;
+  }
+  .shorts-thumb-bg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+  .shorts-play-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 32px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 13px;
+    padding-left: 2px;
+  }
+  .shorts-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255,255,255,0.3);
+  }
+  .shorts-progress-fill {
+    height: 100%;
+    background: var(--brand);
+  }
+  .shorts-progress-fill.done { background: var(--success); }
+  .shorts-body {
+    padding: 8px 10px 10px;
+  }
+  .shorts-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--black100);
+    line-height: 1.4;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .shorts-date {
+    font-size: 11px;
+    color: var(--black45);
+  }
+</style>
+</head>
+<body>
+
+<!-- ── 버전 탭 네비 ── -->
+<nav class="version-nav">
+  <span class="nav-label">my Canvas 학습상세 개선안</span>
+  <div class="version-tab active" onclick="switchVersion('v3', this)">Ver.1 수료 시 완료 섹션 이동</div>
+  <div class="version-tab" onclick="switchVersion('v1', this)">Ver.2 수료 카드 하단 정렬</div>
+  <div class="version-tab" onclick="switchVersion('v2', this)">Ver.3 남은학습 / 완료학습 섹션</div>
+  <div class="version-tab" onclick="switchVersion('v4', this)">Ver.4 학습중 섹션 필터 버튼</div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     VER.1  수료 카드 자동 하단 정렬 + 시각적 구분
+══════════════════════════════════════════ -->
+<div id="v1" class="version-panel">
+  <div class="version-header">
+    <div class="version-badge">Ver.2</div>
+    <div class="version-title">수료 카드 자동 하단 정렬 + "수료 완료" 서브헤더 구분</div>
+    <div class="version-desc">
+      섹션 구조(학습중 / 예정 / 종료)는 현행 유지. 학습중 섹션 내에서 <strong>수료 확정된 카드는 자동으로 하단</strong>으로 밀리고, "수료 완료" 구분선으로 시각적 분리.
+    </div>
+  </div>
+
+  <div class="spec-note">
+    💡 <span><strong>정책 로직:</strong> 학습 기간이 남아있고 수료 확정된 카드 → 학습중 섹션 하단 "수료 완료" 영역으로 자동 이동. 미수료 카드는 상단 유지.</span>
+  </div>
+
+  <div class="canvas-panel">
+    <div class="canvas-panel-title">my Canvas <span>학습상세</span></div>
+
+    <!-- 학습중 섹션 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">
+          학습중
+          <span class="section-count">13</span>
+        </div>
+        <div class="section-toggle" onclick="toggleV1(this)">
+          수료한 학습 숨기기
+          <div class="toggle-switch" id="v1-toggle"></div>
+        </div>
+      </div>
+
+      <!-- 수료 전 카드 -->
+      <div class="card-grid" id="v1-active-cards">
+        <!-- 카드 1 ~ 4 : 수료 전 -->
+      </div>
+
+      <!-- 수료 완료 구분선 + 카드 -->
+      <div id="v1-completed-section">
+        <div class="sub-divider">
+          <span class="sub-divider-label">✅ 수료 완료 <span id="v1-complete-count" style="font-weight:400;color:var(--success)">3</span>건</span>
+          <div class="sub-divider-line"></div>
+        </div>
+        <div class="card-grid" id="v1-completed-cards"></div>
+      </div>
+    </div>
+
+    <!-- 예정 섹션 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">예정 <span class="section-count">2</span></div>
+      </div>
+      <div class="card-grid" id="v1-upcoming-cards"></div>
+    </div>
+
+    <!-- 종료 섹션 -->
+    <div class="section terminated">
+      <div class="section-header">
+        <div class="section-title" style="color:var(--black60);">
+          종료
+          <span class="section-count" id="v1-terminated-count"></span>
+        </div>
+        <select class="period-select" onchange="setV1PeriodFilter(this.value)">
+          <option value="all" selected>기간 전체</option>
+          <option value="2026">2026년</option>
+          <option value="2025">2025년</option>
+          <option value="2024">2024년</option>
+        </select>
+      </div>
+      <div class="card-grid" id="v1-terminated-cards"></div>
+    </div>
+
+    <!-- 쇼츠 시청이력 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">📱 쇼츠 시청이력</div>
+      </div>
+      <div class="shorts-grid" id="v1-shorts-cards"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     VER.2  남은 학습 / 완료 학습 섹션 2개
+══════════════════════════════════════════ -->
+<div id="v2" class="version-panel">
+  <div class="version-header">
+    <div class="version-badge">Ver.3</div>
+    <div class="version-title">남은 학습 / 완료된 학습 섹션 2개로 재구성</div>
+    <div class="version-desc">
+      학습 기간 기준이 아닌 <strong>사용자 목적 기준</strong>으로 섹션 재편. 남은 학습 = 예정 + 진행중(미수료) / 완료된 학습 = 진행중(수료) + 종료.
+    </div>
+  </div>
+
+  <div class="spec-note">
+    💡 <span><strong>정책 로직:</strong> "남은 학습" = 예정 + 학습중(수료처리전/미수료). "완료된 학습" = 학습중(수료 확정) + 종료(기간 종료된 전체). 완료 섹션 내 필터로 수료/미수료 구분 가능.</span>
+  </div>
+
+  <div class="canvas-panel">
+    <div class="canvas-panel-title">my Canvas <span>학습상세</span></div>
+
+    <!-- 남은 학습 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">
+          남은 학습
+          <span class="section-count" id="v2-remain-count">10</span>
+        </div>
+      </div>
+      <div class="card-grid" id="v2-remain-cards"></div>
+    </div>
+
+    <!-- 완료된 학습 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">
+          완료된 학습
+          <span class="section-count" id="v2-done-count">5</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="period-select" onchange="setV2PeriodFilter(this.value)">
+            <option value="all" selected>기간 전체</option>
+            <option value="2026">2026년</option>
+            <option value="2025">2025년</option>
+            <option value="2024">2024년</option>
+          </select>
+          <span id="v2-filter-all"   class="badge badge-brand"    style="cursor:pointer;" onclick="setV2Filter('all')">전체</span>
+          <span id="v2-filter-pass"  class="badge badge-neutral"  style="cursor:pointer;" onclick="setV2Filter('pass')">수료</span>
+          <span id="v2-filter-fail"  class="badge badge-neutral"  style="cursor:pointer;" onclick="setV2Filter('fail')">미수료</span>
+        </div>
+      </div>
+      <div class="card-grid" id="v2-done-cards"></div>
+    </div>
+
+    <!-- 쇼츠 시청이력 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">📱 쇼츠 시청이력</div>
+      </div>
+      <div class="shorts-grid" id="v2-shorts-cards"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     VER.3  현행 섹션 유지 + 수료 시 종료로 이동
+══════════════════════════════════════════ -->
+<div id="v3" class="version-panel active">
+  <div class="version-header">
+    <div class="version-badge">Ver.1</div>
+    <div class="version-title">현행 섹션 구조 유지 + 진행중(수료) → 완료 섹션 이동</div>
+    <div class="version-desc">
+      섹션 레이블 · 구조는 그대로. 단, <strong>학습 기간이 남아있어도 수료 확정된 카드는 '종료' 섹션으로 자동 이동.</strong> 종료 섹션 내 수료/미수료 뱃지로 구분.
+    </div>
+  </div>
+
+  <div class="spec-note">
+    💡 <span><strong>정책 로직:</strong> 종료 섹션 정의 확장 — 기존 "학습종료일 이후" 뿐 아니라 "수료 확정된 건(기간 내 포함)"도 종료 섹션에 노출. 학습중 섹션엔 수료처리전/미수료만 잔류.</span>
+  </div>
+
+  <div class="canvas-panel">
+    <div class="canvas-panel-title">my Canvas <span>학습상세</span></div>
+
+    <!-- 학습중 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">학습중 <span class="section-count" id="v3-ing-count">10</span></div>
+      </div>
+      <div class="card-grid" id="v3-ing-cards"></div>
+    </div>
+
+    <!-- 예정 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">예정 <span class="section-count">2</span></div>
+      </div>
+      <div class="card-grid" id="v3-upcoming-cards"></div>
+    </div>
+
+    <!-- 완료 -->
+    <div class="section terminated">
+      <div class="section-header">
+        <div class="section-title" style="color:var(--black60);">
+          완료
+          <span class="section-count" id="v3-done-count">5</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="period-select" onchange="setV3PeriodFilter(this.value)">
+            <option value="all" selected>기간 전체</option>
+            <option value="2026">2026년</option>
+            <option value="2025">2025년</option>
+            <option value="2024">2024년</option>
+          </select>
+          <span id="v3-filter-all"  class="badge badge-neutral" style="cursor:pointer;background:var(--bg200);color:var(--black60);" onclick="setV3Filter('all')">전체</span>
+          <span id="v3-filter-pass" class="badge badge-neutral" style="cursor:pointer;" onclick="setV3Filter('pass')">수료</span>
+          <span id="v3-filter-fail" class="badge badge-neutral" style="cursor:pointer;" onclick="setV3Filter('fail')">미수료</span>
+        </div>
+      </div>
+      <div class="card-grid" id="v3-done-cards"></div>
+    </div>
+
+    <!-- 쇼츠 시청이력 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">📱 쇼츠 시청이력</div>
+      </div>
+      <div class="shorts-grid" id="v3-shorts-cards"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     VER.4  기존 섹션 유지 + 학습중 필터 버튼
+══════════════════════════════════════════ -->
+<div id="v4" class="version-panel">
+  <div class="version-header">
+    <div class="version-badge">Ver.4</div>
+    <div class="version-title">현행 섹션 유지 + 학습중 섹션 [전체] [수료] [미수료] 필터</div>
+    <div class="version-desc">
+      섹션 구조(학습중 / 예정 / 종료)와 카드 배치 모두 현행 그대로 유지. 단, <strong>학습중 섹션 우상단에 필터 버튼</strong>을 추가해 수료 여부 기준으로 목록을 전환할 수 있게 함.
+    </div>
+  </div>
+
+  <div class="spec-note">
+    💡 <span><strong>정책 로직:</strong> 학습중 섹션 내 카드를 수료 상태 기준으로 필터링. [수료] 선택 시 수료 확정 카드만, [미수료] 선택 시 미수료/수료처리전 카드만 노출. 섹션 이동 없음.</span>
+  </div>
+
+  <div class="canvas-panel">
+    <div class="canvas-panel-title">my Canvas <span>학습상세</span></div>
+
+    <!-- 학습중 섹션 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">
+          학습중
+          <span class="section-count" id="v4-ing-count"></span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span id="v4-filter-all"  class="badge" style="cursor:pointer;" onclick="setV4Filter('all')">전체</span>
+          <span id="v4-filter-pass" class="badge" style="cursor:pointer;" onclick="setV4Filter('pass')">수료</span>
+          <span id="v4-filter-fail" class="badge" style="cursor:pointer;" onclick="setV4Filter('fail')">미수료</span>
+        </div>
+      </div>
+      <div class="card-grid" id="v4-ing-cards"></div>
+    </div>
+
+    <!-- 예정 섹션 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">예정 <span class="section-count">2</span></div>
+      </div>
+      <div class="card-grid" id="v4-upcoming-cards"></div>
+    </div>
+
+    <!-- 종료 섹션 -->
+    <div class="section terminated">
+      <div class="section-header">
+        <div class="section-title" style="color:var(--black60);">
+          종료
+          <span class="section-count" id="v4-terminated-count"></span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select class="period-select" onchange="setV4PeriodFilter(this.value)">
+            <option value="all" selected>기간 전체</option>
+            <option value="2026">2026년</option>
+            <option value="2025">2025년</option>
+            <option value="2024">2024년</option>
+          </select>
+          <span id="v4-term-filter-all"  class="badge" style="cursor:pointer;" onclick="setV4TermFilter('all')">전체</span>
+          <span id="v4-term-filter-pass" class="badge" style="cursor:pointer;" onclick="setV4TermFilter('pass')">수료</span>
+          <span id="v4-term-filter-fail" class="badge" style="cursor:pointer;" onclick="setV4TermFilter('fail')">미수료</span>
+        </div>
+      </div>
+      <div class="card-grid" id="v4-terminated-cards"></div>
+    </div>
+
+    <!-- 쇼츠 시청이력 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">📱 쇼츠 시청이력</div>
+      </div>
+      <div class="shorts-grid" id="v4-shorts-cards"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ────────────────────────────────────────
+   데이터 정의
+──────────────────────────────────────── */
+const CARDS = [
+  // 학습중 + 수료처리전
+  { id:1, name:'효과적인 커뮤니케이션 전략 수립',     type:'online', progress:65, time:'1시간 15분',  period:'2025.11.01 ~ 2026.06.30', state:'ing',       completion:null },
+  { id:2, name:'리더십과 조직 문화 이해',             type:'online', progress:30, time:'40분',        period:'2025.12.01 ~ 2026.05.31', state:'ing',       completion:null },
+  { id:3, name:'데이터 기반 의사결정',                type:'online', progress:80, time:'2시간',        period:'2026.01.01 ~ 2026.07.31', state:'ing',       completion:null },
+  { id:4, name:'프로젝트 관리 기초',                  type:'online', progress:20, time:'25분',        period:'2026.02.01 ~ 2026.08.31', state:'ing',       completion:null },
+  // 학습중 + 수료 확정
+  { id:5, name:'AI 활용 업무 생산성 높이기',          type:'micro',  progress:100, time:'15분',       period:'2025.10.01 ~ 2026.06.30', state:'ing',       completion:'pass' },
+  { id:6, name:'협업 도구 활용법',                    type:'micro',  progress:100, time:'12분',       period:'2025.11.15 ~ 2026.05.15', state:'ing',       completion:'pass' },
+  { id:7, name:'비즈니스 글쓰기 핵심 원칙',           type:'online', progress:100, time:'50분',       period:'2025.09.01 ~ 2026.06.01', state:'ing',       completion:'pass' },
+  // 학습중 + 미수료 확정
+  { id:8, name:'엑셀 고급 활용',                      type:'online', progress:45, time:'1시간 05분',  period:'2025.08.01 ~ 2026.03.31', state:'ing',       completion:null },
+  // 예정
+  { id:9,  name:'디지털 마케팅 전략',                 type:'online', progress:0,  time:'0분',         period:'2026.06.01 ~ 2026.08.31', state:'upcoming',  completion:null },
+  { id:10, name:'조직 심리학 기초',                   type:'micro',  progress:0,  time:'0분',         period:'2026.07.01 ~ 2026.09.30', state:'upcoming',  completion:null },
+  // 종료 (기간 종료)
+  { id:11, name:'신입사원 온보딩 과정',               type:'online', progress:100, time:'3시간',      period:'2025.01.01 ~ 2025.03.31', state:'terminated', completion:'pass' },
+  { id:12, name:'OKR 목표 설정 방법론',               type:'online', progress:55,  time:'1시간',      period:'2025.04.01 ~ 2025.06.30', state:'terminated', completion:'fail' },
+];
+
+/* ── 쇼츠 데이터 ── */
+const SHORTS = [
+  { id:1, name:'1분 만에 배우는 피드백 스킬',          progress:100, lastViewed:'2026.05.03' },
+  { id:2, name:'회의를 짧게 끝내는 3가지 방법',        progress:75,  lastViewed:'2026.05.01' },
+  { id:3, name:'업무 집중력 높이는 뽀모도로 기법',     progress:100, lastViewed:'2026.04.28' },
+  { id:4, name:'팀장이 절대 하지 말아야 할 말 TOP3',   progress:40,  lastViewed:'2026.04.20' },
+  { id:5, name:'30초 자기소개 완성 공식',              progress:100, lastViewed:'2026.04.15' },
+  { id:6, name:'엑셀 단축키 10가지 총정리',            progress:60,  lastViewed:'2026.04.10' },
+];
+
+const SHORTS_COLORS = [
+  ['#6c5ce7','#a29bfe'],['#e17055','#fdcb6e'],['#00b894','#00cec9'],
+  ['#0984e3','#74b9ff'],['#d63031','#ff7675'],['#2d3436','#636e72'],
+];
+
+/* ── 쇼츠 렌더러 ── */
+function renderShortsCard(s) {
+  const [c1, c2] = SHORTS_COLORS[(s.id - 1) % SHORTS_COLORS.length];
+  const fillClass = s.progress === 100 ? 'shorts-progress-fill done' : 'shorts-progress-fill';
+  return `
+  <div class="shorts-card">
+    <div class="shorts-thumb">
+      <div class="shorts-thumb-bg" style="background:linear-gradient(180deg,${c1},${c2});">
+        🎬
+      </div>
+      <div class="shorts-play-icon">▶</div>
+      <div class="shorts-progress-bar">
+        <div class="${fillClass}" style="width:${s.progress}%"></div>
+      </div>
+    </div>
+    <div class="shorts-body">
+      <div class="shorts-name">${s.name}</div>
+      <div class="shorts-date">최근 시청 ${s.lastViewed}</div>
+    </div>
+  </div>`;
+}
+
+function fillShortsGrid(el) {
+  if (!el) return;
+  el.innerHTML = SHORTS.map(s => renderShortsCard(s)).join('');
+}
+
+/* 썸네일 배경색 풀 */
+const THUMB_COLORS = [
+  ['#1a1a2e','#16213e'],['#0f3460','#1a1a2e'],['#e94560','#0f3460'],
+  ['#2c3e50','#3498db'],['#1e3a5f','#2980b9'],['#16a085','#1abc9c'],
+  ['#8e44ad','#9b59b6'],['#2d3436','#636e72'],['#c0392b','#e74c3c'],
+  ['#27ae60','#2ecc71'],['#d35400','#e67e22'],['#2c3e50','#34495e'],
+];
+
+/* ────────────────────────────────────────
+   카드 렌더러
+──────────────────────────────────────── */
+function renderCard(card, opts = {}) {
+  const { dimmed = false } = opts;
+  const [c1, c2] = THUMB_COLORS[(card.id - 1) % THUMB_COLORS.length];
+
+  const typeBadge = card.type === 'micro'
+    ? `<span class="card-type-badge micro">Micro</span>`
+    : `<span class="card-type-badge">온라인</span>`;
+
+  const completionBadge = card.completion === 'pass'
+    ? `<span class="badge badge-success">수료</span>`
+    : card.completion === 'fail'
+    ? `<span class="badge badge-error">미수료</span>`
+    : '';
+
+  const progressFillClass = card.completion === 'pass' ? 'progress-fill done' : 'progress-fill';
+
+  const cardClass = [
+    'card',
+    dimmed ? 'dimmed' : '',
+    card.completion === 'pass' ? 'completed-style' : ''
+  ].filter(Boolean).join(' ');
+
+  return `
+  <div class="${cardClass}">
+    <div class="card-thumb">
+      <div class="thumb-placeholder" style="background:linear-gradient(135deg,${c1},${c2});">
+        <span style="font-size:10px;opacity:0.6">${card.name.slice(0,4)}</span>
+      </div>
+      ${typeBadge}
+    </div>
+    <div class="card-body">
+      <div class="progress-bar"><div class="${progressFillClass}" style="width:${card.progress}%"></div></div>
+      <div class="card-meta">
+        <span>⏱ ${card.time} 학습</span>
+        ${completionBadge}
+      </div>
+      <div class="card-name">${card.name}</div>
+      <div class="card-period">${card.period}</div>
+    </div>
+  </div>`;
+}
+
+function fillGrid(el, cards, opts = {}) {
+  if (!el) return;
+  if (cards.length === 0) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📭</div>해당하는 학습이 없습니다.</div>`;
+    return;
+  }
+  el.innerHTML = cards.map(c => renderCard(c, opts)).join('');
+}
+
+/* ────────────────────────────────────────
+   VER.1 초기화
+──────────────────────────────────────── */
+let v1PeriodFilter = 'all';
+
+function filterByPeriod(cards, year) {
+  if (year === 'all') return cards;
+  return cards.filter(c => c.period.includes(year));
+}
+
+function initV1() {
+  const ingCards   = CARDS.filter(c => c.state === 'ing' && !c.completion);
+  const doneCards  = CARDS.filter(c => c.state === 'ing' && c.completion === 'pass');
+  const upcoming   = CARDS.filter(c => c.state === 'upcoming');
+
+  fillGrid(document.getElementById('v1-active-cards'),    ingCards);
+  fillGrid(document.getElementById('v1-completed-cards'), doneCards);
+  fillGrid(document.getElementById('v1-upcoming-cards'),  upcoming);
+  document.getElementById('v1-complete-count').textContent = doneCards.length;
+  renderV1Terminated();
+}
+
+function renderV1Terminated() {
+  const terminated = CARDS.filter(c => c.state === 'terminated');
+  const filtered   = filterByPeriod(terminated, v1PeriodFilter);
+  fillGrid(document.getElementById('v1-terminated-cards'), filtered, { dimmed: true });
+  document.getElementById('v1-terminated-count').textContent = filtered.length;
+}
+
+function setV1PeriodFilter(val) {
+  v1PeriodFilter = val;
+  renderV1Terminated();
+}
+
+let v1Hidden = false;
+function toggleV1(el) {
+  v1Hidden = !v1Hidden;
+  const sw = document.getElementById('v1-toggle');
+  sw.classList.toggle('on', v1Hidden);
+  document.getElementById('v1-completed-section').style.display = v1Hidden ? 'none' : '';
+}
+
+/* ────────────────────────────────────────
+   VER.2 초기화 & 필터
+──────────────────────────────────────── */
+let v2Filter = 'all';
+let v2PeriodFilter = 'all';
+function initV2() { renderV2(); }
+
+function renderV2() {
+  const remain = CARDS.filter(c =>
+    c.state === 'upcoming' ||
+    (c.state === 'ing' && (c.completion === null || c.completion === 'fail'))
+  );
+  const doneAll  = CARDS.filter(c =>
+    (c.state === 'ing' && c.completion === 'pass') ||
+    c.state === 'terminated'
+  );
+  const periodFiltered = filterByPeriod(doneAll, v2PeriodFilter);
+  const donePass = periodFiltered.filter(c => c.completion === 'pass');
+  const doneFail = periodFiltered.filter(c => c.completion !== 'pass');
+  const doneToShow = v2Filter === 'pass' ? donePass : v2Filter === 'fail' ? doneFail : periodFiltered;
+
+  document.getElementById('v2-remain-count').textContent = remain.length;
+  document.getElementById('v2-done-count').textContent   = periodFiltered.length;
+
+  fillGrid(document.getElementById('v2-remain-cards'), remain);
+  fillGrid(document.getElementById('v2-done-cards'),   doneToShow);
+
+  ['all','pass','fail'].forEach(k => {
+    const el = document.getElementById(`v2-filter-${k}`);
+    if (el) {
+      el.className = k === v2Filter ? 'badge badge-brand' : 'badge badge-neutral';
+    }
+  });
+}
+
+function setV2Filter(f) { v2Filter = f; renderV2(); }
+function setV2PeriodFilter(val) { v2PeriodFilter = val; renderV2(); }
+
+/* ────────────────────────────────────────
+   VER.3 초기화 & 필터
+──────────────────────────────────────── */
+let v3Filter = 'all';
+let v3PeriodFilter = 'all';
+function initV3() { renderV3(); }
+
+function renderV3() {
+  const ing = CARDS.filter(c => c.state === 'ing' && (c.completion === null || c.completion === 'fail') && !isTerminated(c));
+  const terminatedAll = CARDS.filter(c =>
+    c.state === 'terminated' ||
+    (c.state === 'ing' && c.completion === 'pass')
+  );
+  const periodFiltered = filterByPeriod(terminatedAll, v3PeriodFilter);
+  const termPass = periodFiltered.filter(c => c.completion === 'pass');
+  const termFail = periodFiltered.filter(c => c.completion !== 'pass');
+  const termShow = v3Filter === 'pass' ? termPass : v3Filter === 'fail' ? termFail : periodFiltered;
+
+  const upcoming = CARDS.filter(c => c.state === 'upcoming');
+
+  document.getElementById('v3-ing-count').textContent   = ing.length;
+  document.getElementById('v3-done-count').textContent  = periodFiltered.length;
+
+  fillGrid(document.getElementById('v3-ing-cards'),      ing);
+  fillGrid(document.getElementById('v3-upcoming-cards'), upcoming);
+  fillGrid(document.getElementById('v3-done-cards'),     termShow, { dimmed: true });
+
+  ['all','pass','fail'].forEach(k => {
+    const el = document.getElementById(`v3-filter-${k}`);
+    if (el) {
+      if (k === v3Filter) {
+        el.style.background = 'var(--black100)';
+        el.style.color = '#fff';
+      } else {
+        el.style.background = 'var(--bg200)';
+        el.style.color = 'var(--black60)';
+      }
+    }
+  });
+}
+
+function isTerminated(c) { return c.state === 'terminated'; }
+function setV3Filter(f) { v3Filter = f; renderV3(); }
+function setV3PeriodFilter(val) { v3PeriodFilter = val; renderV3(); }
+
+/* ────────────────────────────────────────
+   VER.4 초기화 & 필터
+──────────────────────────────────────── */
+let v4Filter = 'all';
+let v4TermFilter = 'all';
+let v4PeriodFilter = 'all';
+function initV4() { renderV4(); }
+
+function renderV4() {
+  const ingAll  = CARDS.filter(c => c.state === 'ing');
+  const ingPass = ingAll.filter(c => c.completion === 'pass');
+  const ingFail = ingAll.filter(c => c.completion !== 'pass');
+  const ingShow = v4Filter === 'pass' ? ingPass : v4Filter === 'fail' ? ingFail : ingAll;
+
+  const upcoming   = CARDS.filter(c => c.state === 'upcoming');
+  const terminated = CARDS.filter(c => c.state === 'terminated');
+  const termPeriod = filterByPeriod(terminated, v4PeriodFilter);
+  const termPass   = termPeriod.filter(c => c.completion === 'pass');
+  const termFail   = termPeriod.filter(c => c.completion !== 'pass');
+  const termShow   = v4TermFilter === 'pass' ? termPass : v4TermFilter === 'fail' ? termFail : termPeriod;
+
+  document.getElementById('v4-ing-count').textContent        = ingShow.length;
+  document.getElementById('v4-terminated-count').textContent = termShow.length;
+
+  fillGrid(document.getElementById('v4-ing-cards'),        ingShow);
+  fillGrid(document.getElementById('v4-upcoming-cards'),   upcoming);
+  fillGrid(document.getElementById('v4-terminated-cards'), termShow, { dimmed: true });
+
+  // 학습중 필터 버튼 스타일
+  ['all','pass','fail'].forEach(k => {
+    const el = document.getElementById(`v4-filter-${k}`);
+    if (!el) return;
+    el.style.cssText = k === v4Filter
+      ? 'cursor:pointer;background:var(--black100);color:#fff;display:inline-flex;align-items:center;padding:1px 10px;border-radius:20px;font-size:11px;font-weight:600;'
+      : 'cursor:pointer;background:var(--bg200);color:var(--black60);display:inline-flex;align-items:center;padding:1px 10px;border-radius:20px;font-size:11px;font-weight:600;';
+  });
+
+  // 종료 필터 버튼 스타일
+  ['all','pass','fail'].forEach(k => {
+    const el = document.getElementById(`v4-term-filter-${k}`);
+    if (!el) return;
+    el.style.cssText = k === v4TermFilter
+      ? 'cursor:pointer;background:var(--black100);color:#fff;display:inline-flex;align-items:center;padding:1px 10px;border-radius:20px;font-size:11px;font-weight:600;'
+      : 'cursor:pointer;background:var(--bg200);color:var(--black60);display:inline-flex;align-items:center;padding:1px 10px;border-radius:20px;font-size:11px;font-weight:600;';
+  });
+}
+
+function setV4Filter(f) { v4Filter = f; renderV4(); }
+function setV4TermFilter(f) { v4TermFilter = f; renderV4(); }
+function setV4PeriodFilter(val) { v4PeriodFilter = val; renderV4(); }
+
+/* ────────────────────────────────────────
+   버전 탭 전환
+──────────────────────────────────────── */
+function switchVersion(id, tabEl) {
+  document.querySelectorAll('.version-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.version-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  tabEl.classList.add('active');
+}
+
+/* 초기화 */
+initV1();
+initV2();
+initV3();
+initV4();
+fillShortsGrid(document.getElementById('v1-shorts-cards'));
+fillShortsGrid(document.getElementById('v2-shorts-cards'));
+fillShortsGrid(document.getElementById('v3-shorts-cards'));
+fillShortsGrid(document.getElementById('v4-shorts-cards'));
+</script>
+</body>
+</html>
