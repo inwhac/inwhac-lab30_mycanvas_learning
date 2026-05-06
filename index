@@ -418,6 +418,57 @@
     color: var(--black60);
   }
 
+  /* ── 학습 필터링 (인라인 노출형) ── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 0 4px;
+    border-top: 1px solid var(--bg200);
+    margin-top: 2px;
+    margin-bottom: 12px;
+  }
+  .filter-bar-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .filter-bar-divider {
+    width: 1px;
+    height: 18px;
+    background: var(--bg300);
+  }
+  .filter-bar-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--black45);
+    white-space: nowrap;
+  }
+  .filter-chip {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--bg300);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--black60);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #fff;
+    white-space: nowrap;
+  }
+  .filter-chip:hover { border-color: var(--black45); color: var(--black100); }
+  .filter-chip.active { background: var(--black100); color: #fff; border-color: var(--black100); }
+  .filter-tog-label {
+    font-size: 12px;
+    color: var(--black80);
+    white-space: nowrap;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
   /* ── 쇼츠 섹션 ── */
   .shorts-grid {
     display: grid;
@@ -528,14 +579,24 @@
     <!-- 학습중 섹션 -->
     <div class="section">
       <div class="section-header">
-        <div class="section-title">
-          학습중
-          <span class="section-count">13</span>
+        <div class="section-title">학습중 <span class="section-count">13</span></div>
+      </div>
+      <div class="filter-bar">
+        <span class="filter-bar-label">수료 여부</span>
+        <div class="filter-bar-group">
+          <span class="filter-chip active" id="v1fc-all"  onclick="setV1FC('all')">전체</span>
+          <span class="filter-chip"        id="v1fc-pass" onclick="setV1FC('pass')">수료</span>
+          <span class="filter-chip"        id="v1fc-fail" onclick="setV1FC('fail')">미수료</span>
         </div>
-        <div class="section-toggle" onclick="toggleV1(this)">
-          수료한 학습 숨기기
-          <div class="toggle-switch" id="v1-toggle"></div>
-        </div>
+        <div class="filter-bar-divider"></div>
+        <label class="filter-tog-label">
+          <div class="toggle-switch" id="v1-tog-offline" onclick="toggleOpt(this,'v1','offline')"></div>
+          오프라인 학습
+        </label>
+        <label class="filter-tog-label">
+          <div class="toggle-switch" id="v1-tog-book" onclick="toggleOpt(this,'v1','book')"></div>
+          교재 제공
+        </label>
       </div>
 
       <!-- 수료 전 카드 -->
@@ -568,12 +629,20 @@
           종료
           <span class="section-count" id="v1-terminated-count"></span>
         </div>
+      </div>
+      <div class="filter-bar">
         <select class="period-select" onchange="setV1PeriodFilter(this.value)">
           <option value="all" selected>기간 전체</option>
           <option value="2026">2026년</option>
           <option value="2025">2025년</option>
           <option value="2024">2024년</option>
         </select>
+        <div class="filter-bar-divider"></div>
+        <div class="filter-bar-group">
+          <span class="filter-chip active" id="v1-term-filter-all"  onclick="setV1TermFilter('all')">전체</span>
+          <span class="filter-chip"        id="v1-term-filter-pass" onclick="setV1TermFilter('pass')">수료</span>
+          <span class="filter-chip"        id="v1-term-filter-fail" onclick="setV1TermFilter('fail')">미수료</span>
+        </div>
       </div>
       <div class="card-grid" id="v1-terminated-cards"></div>
     </div>
@@ -610,10 +679,24 @@
     <!-- 남은 학습 -->
     <div class="section">
       <div class="section-header">
-        <div class="section-title">
-          남은 학습
-          <span class="section-count" id="v2-remain-count">10</span>
+        <div class="section-title">남은 학습 <span class="section-count" id="v2-remain-count">10</span></div>
+      </div>
+      <div class="filter-bar">
+        <span class="filter-bar-label">수료 여부</span>
+        <div class="filter-bar-group">
+          <span class="filter-chip active" id="v2fc-all"  onclick="setV2FC('all')">전체</span>
+          <span class="filter-chip"        id="v2fc-pass" onclick="setV2FC('pass')">수료</span>
+          <span class="filter-chip"        id="v2fc-fail" onclick="setV2FC('fail')">미수료</span>
         </div>
+        <div class="filter-bar-divider"></div>
+        <label class="filter-tog-label">
+          <div class="toggle-switch" id="v2-tog-offline" onclick="toggleOpt(this,'v2','offline')"></div>
+          오프라인 학습
+        </label>
+        <label class="filter-tog-label">
+          <div class="toggle-switch" id="v2-tog-book" onclick="toggleOpt(this,'v2','book')"></div>
+          교재 제공
+        </label>
       </div>
       <div class="card-grid" id="v2-remain-cards"></div>
     </div>
@@ -625,16 +708,19 @@
           완료된 학습
           <span class="section-count" id="v2-done-count">5</span>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <select class="period-select" onchange="setV2PeriodFilter(this.value)">
-            <option value="all" selected>기간 전체</option>
-            <option value="2026">2026년</option>
-            <option value="2025">2025년</option>
-            <option value="2024">2024년</option>
-          </select>
-          <span id="v2-filter-all"   class="badge badge-brand"    style="cursor:pointer;" onclick="setV2Filter('all')">전체</span>
-          <span id="v2-filter-pass"  class="badge badge-neutral"  style="cursor:pointer;" onclick="setV2Filter('pass')">수료</span>
-          <span id="v2-filter-fail"  class="badge badge-neutral"  style="cursor:pointer;" onclick="setV2Filter('fail')">미수료</span>
+      </div>
+      <div class="filter-bar">
+        <select class="period-select" onchange="setV2PeriodFilter(this.value)">
+          <option value="all" selected>기간 전체</option>
+          <option value="2026">2026년</option>
+          <option value="2025">2025년</option>
+          <option value="2024">2024년</option>
+        </select>
+        <div class="filter-bar-divider"></div>
+        <div class="filter-bar-group">
+          <span class="filter-chip active" id="v2-filter-all"  onclick="setV2Filter('all')">전체</span>
+          <span class="filter-chip"        id="v2-filter-pass" onclick="setV2Filter('pass')">수료</span>
+          <span class="filter-chip"        id="v2-filter-fail" onclick="setV2Filter('fail')">미수료</span>
         </div>
       </div>
       <div class="card-grid" id="v2-done-cards"></div>
@@ -674,6 +760,23 @@
       <div class="section-header">
         <div class="section-title">학습중 <span class="section-count" id="v3-ing-count">10</span></div>
       </div>
+      <div class="filter-bar">
+        <span class="filter-bar-label">수료 여부</span>
+        <div class="filter-bar-group">
+          <span class="filter-chip active" id="v3fc-all"  onclick="setV3FC('all')">전체</span>
+          <span class="filter-chip"        id="v3fc-pass" onclick="setV3FC('pass')">수료</span>
+          <span class="filter-chip"        id="v3fc-fail" onclick="setV3FC('fail')">미수료</span>
+        </div>
+        <div class="filter-bar-divider"></div>
+        <label class="filter-tog-label">
+          <div class="toggle-switch" id="v3-tog-offline" onclick="toggleOpt(this,'v3','offline')"></div>
+          오프라인 학습
+        </label>
+        <label class="filter-tog-label">
+          <div class="toggle-switch" id="v3-tog-book" onclick="toggleOpt(this,'v3','book')"></div>
+          교재 제공
+        </label>
+      </div>
       <div class="card-grid" id="v3-ing-cards"></div>
     </div>
 
@@ -692,16 +795,19 @@
           완료
           <span class="section-count" id="v3-done-count">5</span>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <select class="period-select" onchange="setV3PeriodFilter(this.value)">
-            <option value="all" selected>기간 전체</option>
-            <option value="2026">2026년</option>
-            <option value="2025">2025년</option>
-            <option value="2024">2024년</option>
-          </select>
-          <span id="v3-filter-all"  class="badge badge-neutral" style="cursor:pointer;background:var(--bg200);color:var(--black60);" onclick="setV3Filter('all')">전체</span>
-          <span id="v3-filter-pass" class="badge badge-neutral" style="cursor:pointer;" onclick="setV3Filter('pass')">수료</span>
-          <span id="v3-filter-fail" class="badge badge-neutral" style="cursor:pointer;" onclick="setV3Filter('fail')">미수료</span>
+      </div>
+      <div class="filter-bar">
+        <select class="period-select" onchange="setV3PeriodFilter(this.value)">
+          <option value="all" selected>기간 전체</option>
+          <option value="2026">2026년</option>
+          <option value="2025">2025년</option>
+          <option value="2024">2024년</option>
+        </select>
+        <div class="filter-bar-divider"></div>
+        <div class="filter-bar-group">
+          <span class="filter-chip active" id="v3-filter-all"  onclick="setV3Filter('all')">전체</span>
+          <span class="filter-chip"        id="v3-filter-pass" onclick="setV3Filter('pass')">수료</span>
+          <span class="filter-chip"        id="v3-filter-fail" onclick="setV3Filter('fail')">미수료</span>
         </div>
       </div>
       <div class="card-grid" id="v3-done-cards"></div>
@@ -739,15 +845,24 @@
     <!-- 학습중 섹션 -->
     <div class="section">
       <div class="section-header">
-        <div class="section-title">
-          학습중
-          <span class="section-count" id="v4-ing-count"></span>
+        <div class="section-title">학습중 <span class="section-count" id="v4-ing-count"></span></div>
+      </div>
+      <div class="filter-bar">
+        <span class="filter-bar-label">수료 여부</span>
+        <div class="filter-bar-group">
+          <span class="filter-chip active" id="v4fc-all"  onclick="setV4FC('all')">전체</span>
+          <span class="filter-chip"        id="v4fc-pass" onclick="setV4FC('pass')">수료</span>
+          <span class="filter-chip"        id="v4fc-fail" onclick="setV4FC('fail')">미수료</span>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <span id="v4-filter-all"  class="badge" style="cursor:pointer;" onclick="setV4Filter('all')">전체</span>
-          <span id="v4-filter-pass" class="badge" style="cursor:pointer;" onclick="setV4Filter('pass')">수료</span>
-          <span id="v4-filter-fail" class="badge" style="cursor:pointer;" onclick="setV4Filter('fail')">미수료</span>
-        </div>
+        <div class="filter-bar-divider"></div>
+        <label class="filter-tog-label">
+          <div class="toggle-switch" id="v4-tog-offline" onclick="toggleOpt(this,'v4','offline')"></div>
+          오프라인 학습
+        </label>
+        <label class="filter-tog-label">
+          <div class="toggle-switch" id="v4-tog-book" onclick="toggleOpt(this,'v4','book')"></div>
+          교재 제공
+        </label>
       </div>
       <div class="card-grid" id="v4-ing-cards"></div>
     </div>
@@ -767,16 +882,19 @@
           종료
           <span class="section-count" id="v4-terminated-count"></span>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <select class="period-select" onchange="setV4PeriodFilter(this.value)">
-            <option value="all" selected>기간 전체</option>
-            <option value="2026">2026년</option>
-            <option value="2025">2025년</option>
-            <option value="2024">2024년</option>
-          </select>
-          <span id="v4-term-filter-all"  class="badge" style="cursor:pointer;" onclick="setV4TermFilter('all')">전체</span>
-          <span id="v4-term-filter-pass" class="badge" style="cursor:pointer;" onclick="setV4TermFilter('pass')">수료</span>
-          <span id="v4-term-filter-fail" class="badge" style="cursor:pointer;" onclick="setV4TermFilter('fail')">미수료</span>
+      </div>
+      <div class="filter-bar">
+        <select class="period-select" onchange="setV4PeriodFilter(this.value)">
+          <option value="all" selected>기간 전체</option>
+          <option value="2026">2026년</option>
+          <option value="2025">2025년</option>
+          <option value="2024">2024년</option>
+        </select>
+        <div class="filter-bar-divider"></div>
+        <div class="filter-bar-group">
+          <span class="filter-chip active" id="v4-term-filter-all"  onclick="setV4TermFilter('all')">전체</span>
+          <span class="filter-chip"        id="v4-term-filter-pass" onclick="setV4TermFilter('pass')">수료</span>
+          <span class="filter-chip"        id="v4-term-filter-fail" onclick="setV4TermFilter('fail')">미수료</span>
         </div>
       </div>
       <div class="card-grid" id="v4-terminated-cards"></div>
@@ -924,6 +1042,7 @@ function fillGrid(el, cards, opts = {}) {
    VER.1 초기화
 ──────────────────────────────────────── */
 let v1PeriodFilter = 'all';
+let v1TermFilter = 'all';
 
 function filterByPeriod(cards, year) {
   if (year === 'all') return cards;
@@ -943,16 +1062,23 @@ function initV1() {
 }
 
 function renderV1Terminated() {
-  const terminated = CARDS.filter(c => c.state === 'terminated');
-  const filtered   = filterByPeriod(terminated, v1PeriodFilter);
+  const terminated  = CARDS.filter(c => c.state === 'terminated');
+  const byPeriod    = filterByPeriod(terminated, v1PeriodFilter);
+  const byPass      = byPeriod.filter(c => c.completion === 'pass');
+  const byFail      = byPeriod.filter(c => c.completion !== 'pass');
+  const filtered    = v1TermFilter === 'pass' ? byPass : v1TermFilter === 'fail' ? byFail : byPeriod;
+
   fillGrid(document.getElementById('v1-terminated-cards'), filtered, { dimmed: true });
   document.getElementById('v1-terminated-count').textContent = filtered.length;
+
+  ['all','pass','fail'].forEach(k => {
+    const el = document.getElementById(`v1-term-filter-${k}`);
+    if (el) el.classList.toggle('active', k === v1TermFilter);
+  });
 }
 
-function setV1PeriodFilter(val) {
-  v1PeriodFilter = val;
-  renderV1Terminated();
-}
+function setV1PeriodFilter(val) { v1PeriodFilter = val; renderV1Terminated(); }
+function setV1TermFilter(val)   { v1TermFilter = val;   renderV1Terminated(); }
 
 let v1Hidden = false;
 function toggleV1(el) {
@@ -992,7 +1118,7 @@ function renderV2() {
   ['all','pass','fail'].forEach(k => {
     const el = document.getElementById(`v2-filter-${k}`);
     if (el) {
-      el.className = k === v2Filter ? 'badge badge-brand' : 'badge badge-neutral';
+      el.classList.toggle('active', k === v2Filter);
     }
   });
 }
@@ -1029,15 +1155,7 @@ function renderV3() {
 
   ['all','pass','fail'].forEach(k => {
     const el = document.getElementById(`v3-filter-${k}`);
-    if (el) {
-      if (k === v3Filter) {
-        el.style.background = 'var(--black100)';
-        el.style.color = '#fff';
-      } else {
-        el.style.background = 'var(--bg200)';
-        el.style.color = 'var(--black60)';
-      }
-    }
+    if (el) el.classList.toggle('active', k === v3Filter);
   });
 }
 
@@ -1076,25 +1194,93 @@ function renderV4() {
   // 학습중 필터 버튼 스타일
   ['all','pass','fail'].forEach(k => {
     const el = document.getElementById(`v4-filter-${k}`);
-    if (!el) return;
-    el.style.cssText = k === v4Filter
-      ? 'cursor:pointer;background:var(--black100);color:#fff;display:inline-flex;align-items:center;padding:1px 10px;border-radius:20px;font-size:11px;font-weight:600;'
-      : 'cursor:pointer;background:var(--bg200);color:var(--black60);display:inline-flex;align-items:center;padding:1px 10px;border-radius:20px;font-size:11px;font-weight:600;';
+    if (el) el.classList.toggle('active', k === v4Filter);
   });
 
   // 종료 필터 버튼 스타일
   ['all','pass','fail'].forEach(k => {
     const el = document.getElementById(`v4-term-filter-${k}`);
-    if (!el) return;
-    el.style.cssText = k === v4TermFilter
-      ? 'cursor:pointer;background:var(--black100);color:#fff;display:inline-flex;align-items:center;padding:1px 10px;border-radius:20px;font-size:11px;font-weight:600;'
-      : 'cursor:pointer;background:var(--bg200);color:var(--black60);display:inline-flex;align-items:center;padding:1px 10px;border-radius:20px;font-size:11px;font-weight:600;';
+    if (el) el.classList.toggle('active', k === v4TermFilter);
   });
 }
 
 function setV4Filter(f) { v4Filter = f; renderV4(); }
 function setV4TermFilter(f) { v4TermFilter = f; renderV4(); }
 function setV4PeriodFilter(val) { v4PeriodFilter = val; renderV4(); }
+
+/* ────────────────────────────────────────
+   학습 필터링 공통 로직
+──────────────────────────────────────── */
+const filterState = {
+  v1: { completion: 'all', offline: false, book: false },
+  v2: { completion: 'all', offline: false, book: false },
+  v3: { completion: 'all', offline: false, book: false },
+  v4: { completion: 'all', offline: false, book: false },
+};
+
+function setFC(vid, val) {
+  filterState[vid].completion = val;
+  ['all','pass','fail'].forEach(k => {
+    const el = document.getElementById(`${vid}fc-${k}`);
+    if (el) el.classList.toggle('active', k === val);
+  });
+  applyIngFilter(vid);
+}
+function setV1FC(v) { setFC('v1', v); }
+function setV2FC(v) { setFC('v2', v); }
+function setV3FC(v) { setFC('v3', v); }
+function setV4FC(v) { setFC('v4', v); }
+
+function toggleOpt(el, vid, key) {
+  const cur = filterState[vid][key];
+  filterState[vid][key] = !cur;
+  el.classList.toggle('on', !cur);
+  applyIngFilter(vid);
+}
+
+function applyIngFilter(vid) {
+  const s = filterState[vid];
+  // 각 버전별 대상 카드 풀 (학습중/남은학습)
+  let pool;
+  if (vid === 'v2') {
+    pool = CARDS.filter(c =>
+      c.state === 'upcoming' ||
+      (c.state === 'ing' && (c.completion === null || c.completion === 'fail'))
+    );
+  } else if (vid === 'v3') {
+    pool = CARDS.filter(c => c.state === 'ing' && (c.completion === null || c.completion === 'fail'));
+  } else {
+    // v1, v4: ing 전체
+    pool = CARDS.filter(c => c.state === 'ing');
+  }
+
+  // 수료 여부 필터
+  if (s.completion === 'pass') pool = pool.filter(c => c.completion === 'pass');
+  else if (s.completion === 'fail') pool = pool.filter(c => c.completion !== 'pass');
+
+  // 오프라인 토글: offline 속성 있는 것만 (데모용 - id 홀수 카드를 오프라인으로 간주)
+  if (s.offline) pool = pool.filter(c => c.id % 2 === 1);
+  // 교재 제공 토글: id % 3 === 0 카드를 교재 제공으로 간주
+  if (s.book) pool = pool.filter(c => c.id % 3 === 0);
+
+  // 각 버전 그리드에 반영
+  if (vid === 'v1') {
+    const active  = pool.filter(c => c.completion !== 'pass');
+    const passed  = pool.filter(c => c.completion === 'pass');
+    fillGrid(document.getElementById('v1-active-cards'),    active);
+    fillGrid(document.getElementById('v1-completed-cards'), passed);
+    document.getElementById('v1-complete-count').textContent = passed.length;
+  } else if (vid === 'v2') {
+    fillGrid(document.getElementById('v2-remain-cards'), pool);
+    document.getElementById('v2-remain-count').textContent = pool.length;
+  } else if (vid === 'v3') {
+    fillGrid(document.getElementById('v3-ing-cards'), pool);
+    document.getElementById('v3-ing-count').textContent = pool.length;
+  } else if (vid === 'v4') {
+    fillGrid(document.getElementById('v4-ing-cards'), pool);
+    document.getElementById('v4-ing-count').textContent = pool.length;
+  }
+}
 
 /* ────────────────────────────────────────
    버전 탭 전환
